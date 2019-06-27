@@ -42,7 +42,7 @@
 </template>
 
 <script>
-import { remote } from 'electron'
+import { remote, ipcRenderer } from 'electron'
 import Vue from 'vue'
 import { Icon } from 'ant-design-vue'
 Vue.use(Icon)
@@ -81,6 +81,7 @@ export default {
   methods: {
     handleSwitch (type) {
       this.desktopType = type
+      ipcRenderer.send('desktopSwitch', type)
     },
     handleShutdownDrop (type) {
       menu.popup({ window: remote.getCurrentWindow() })
@@ -146,6 +147,11 @@ export default {
       &:hover{
         &:after{
           height: 0;
+        }
+        &.is-active{
+          &:after{
+          height: 2px;
+        }
         }
       }
     }

@@ -1,6 +1,6 @@
 'use strict'
 
-import { app, BrowserWindow, screen } from 'electron'
+import { app, BrowserWindow, screen, ipcMain } from 'electron'
 
 /**
  * Set `__static` path to static files in production
@@ -11,14 +11,15 @@ if (process.env.NODE_ENV !== 'development') {
 }
 
 let mainWindow
-let desktopWindow
+let topButtonWindow
+
 // let child
 // let cx = 100
 // let timer = null
 const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
-const desktopWindowUrl = process.env.NODE_ENV === 'development'
+const topButtonWindowUrl = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080/#/desktop-top`
   : `file://${__dirname}/index.html#/desktop-top`
 function createWindow () {
@@ -35,14 +36,14 @@ function createWindow () {
     webPreferences: {
       nodeIntegration: true
     },
-    show: false,
-    transparent: true,
-    frame: false
+    show: false
+    // transparent: true,
+    // frame: false
   })
 
   // mainWindow.setIgnoreMouseEvents(true)
   mainWindow.loadURL(winURL)
-  desktopWindow = new BrowserWindow({
+  topButtonWindow = new BrowserWindow({
     width,
     height: 25,
     parent: mainWindow,
@@ -53,19 +54,26 @@ function createWindow () {
       nodeIntegration: true
     }
   })
-  desktopWindow.loadURL(desktopWindowUrl)
+  topButtonWindow.loadURL(topButtonWindowUrl)
 
   mainWindow.on('closed', () => {
     mainWindow = null
   })
-  // 设置分辨率大小
+  // 设置显示 和 位置
   mainWindow.once('ready-to-show', () => {
     mainWindow.setPosition(0, 50)
     mainWindow.show()
   })
-  desktopWindow.once('ready-to-show', () => {
-    desktopWindow.setPosition(0, 100)
-    desktopWindow.show()
+  topButtonWindow.once('ready-to-show', () => {
+    topButtonWindow.setPosition(0, 100)
+    topButtonWindow.show()
+  })
+  // 设置最小化后复原,让窗口始终保持在桌面显示
+  mainWindow.on('minimize', () => {
+    mainWindow.restore()
+  })
+  topButtonWindow.on('minimize', () => {
+    topButtonWindow.restore()
   })
 }
 
@@ -82,7 +90,19 @@ app.on('activate', () => {
     createWindow()
   }
 })
-
+// 监听顶部开关窗口切换
+ipcMain.on('desktopSwitch', (event, data) => {
+  // 给桌面窗口发送切换状态
+  if (data === 'meos') {
+    mainWindow.show()
+  }
+  mainWindow.webContents.send('desktopSwitch', data)
+})
+ipcMain.on('desktopVisible', (event, data) => {
+  if (data === 'hide') {
+    mainWindow.hide()
+  }
+})
 /**
  * Auto Updater
  *

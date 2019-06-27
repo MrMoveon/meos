@@ -1,23 +1,25 @@
 <template>
-    <div class="desktop-content">
-       <div class="desktop-wrap"></div>
-       <div class="desktop-menu">
-         <ul class="desktop-menu-wrap">
-           <li v-for="item in menu" :key="item.title">
-             <a-tooltip placement="top" >
+    <div class="desktop-content" :class="type">
+      <div class="desktop-content-bg" style="background-image:url(../../../static/images/bizhi/02.jpg)">
+        <div class="desktop-wrap">{{type}}</div>
+      </div>
+      <div class="desktop-menu">
+          <ul class="desktop-menu-wrap">
+            <li v-for="item in menu" :key="item.title">
+              <a-tooltip placement="top" >
                 <template slot="title">
                   <span>{{item.title}}</span>
                 </template>
                 <img :src="item.icon" alt="" srcset="">
               </a-tooltip>
-           </li>
-          
-         </ul>
-       </div>
+            </li>
+          </ul>
+        </div>
     </div>
 </template>
 
 <script>
+import { ipcRenderer } from 'electron'
 import Vue from 'vue'
 import {Tooltip, Button} from 'ant-design-vue'
 Vue.use(Tooltip)
@@ -52,12 +54,29 @@ export default {
           title: '桌面设置',
           icon: '../../../../static/images/icon/icon-system.png'
         }
-      ]
+      ],
+      type: 'meos'
     }
+  },
+  created () {
+    var self = this
+    //
+    ipcRenderer.on('desktopSwitch', (event, data) => {
+      self.type = data
+    })
+  },
+  mounted () {
+    document.querySelector('.desktop-content-bg').addEventListener('transitionend', this.transitionend)
   },
   methods: {
     handle (e) {
       this.test = {background: '#CCC'}
+    },
+    transitionend () {
+      if (this.type === 'window') {
+        console.log('end')
+        ipcRenderer.send('desktopVisible', 'hide')
+      }
     }
   }
 }
@@ -66,19 +85,46 @@ export default {
 <style lang="less">
 
 .desktop-content{
+  position: relative;
   width: 100%;
   height: 100%;
-  background:url(../../assets/images/bizhi/02.jpg) no-repeat;
-  background-size: cover;
+  overflow: hidden;
+  &-bg{
+    position: absolute;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    background-repeat:no-repeat;
+    background-position: center top;
+    background-size: cover;
+    transition: all .3s;
+    backface-visibility: hidden;
+  }
+  &.window{
+    .desktop-menu{
+      transform: translate3d(0,100%,0);
+    }
+    .desktop-content-bg{
+      transform: translate3d(100%,0,0);
+    }
+  }
 }
 .desktop-wrap{
+  position: relative;
+  z-index: 2;
   height: calc(100% - 80px);
 }
 .desktop-menu{
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
   height: 80px;
   display: flex;
   justify-content: center;
   align-items: center;
+  transition: all .3s;
   &-wrap{
     display: flex;
     flex-direction: row;
