@@ -6,7 +6,6 @@ import fileIconMap from '../config/fileIconMap'
 const { webFrame, screen } = electron
 const path = require('path')
 const fs = require('fs-extra')
-const iconv = require('iconv-lite')
 /**
  * 设置窗口的缩放
  */
@@ -21,47 +20,27 @@ export const setZoom = () => {
 /**
  * 获取盘符
  */
+/**
+ * 获取本地磁盘大小
+ * WMIC LOGICALDISK WHERE MEDIATYPE='12' GET DESCRIPTION,DEVICEID,FILESYSTEM,SIZE,FREESPACE
+ */
 export const getDisk = () => {
   return new Promise((resolve, reject) => {
-    // exec('wmic logicaldisk where drivetype=3 get deviceid', (err, stdout, stderr) => {
-    //   if (err || stderr) {
-    //     let error = 'root path open failed' + err + stderr
-    //     reject(error)
-    //     return
-    //   }
-    //   let con = stdout.toString().trim()
-    //   let arr = con.split('\n')
-    //   let disk = []
-    //   arr.filter(item => {
-    //     if (item.indexOf('DeviceID') === -1) {
-    //       disk.push(item.toString().slice(0, 2))
-    //     }
-    //   })
-    //   resolve(disk)
-    // })
-    exec("WMIC LOGICALDISK WHERE MEDIATYPE='12' GET DESCRIPTION,DEVICEID,FILESYSTEM,SIZE,FREESPACE", { encoding: 'buffer' }, (err, stdout) => {
-      if (err) {
-        let error = 'root path open failed' + err
+    exec('wmic logicaldisk where drivetype=3 get deviceid', (err, stdout, stderr) => {
+      if (err || stderr) {
+        let error = 'root path open failed' + err + stderr
         reject(error)
         return
       }
-      let stdoutIconv = iconv.decode(stdout, 'cp936')
-      let con = stdoutIconv.toString().trim()
-      let disk = con.split('\n')
-      var diskData = []
-      var reg = /([^a-zA-Z0-9_\s]+)\s+([a-zA-Z]:)\s+[a-zA-Z]+\s+(\d+)\s+(\d+)/i
-      disk.forEach(item => {
-        var data = reg.exec(item)
-        if (data) {
-          diskData.push({
-            zh: data[1],
-            en: data[2],
-            spaceAvailable: data[3],
-            total: data[4]
-          })
+      let con = stdout.toString().trim()
+      let arr = con.split('\n')
+      let disk = []
+      arr.filter(item => {
+        if (item.indexOf('DeviceID') === -1) {
+          disk.push(item.toString().slice(0, 2))
         }
       })
-      resolve(diskData)
+      resolve(disk)
     })
   })
 }

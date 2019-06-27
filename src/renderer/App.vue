@@ -5,17 +5,18 @@
 </template>
 
 <script>
-import {setZoom} from '@/utils/utils'
+// import {setZoom} from '@/utils/utils'
 export default {
   name: 'meos',
   created () {
-    setZoom()
+    // setZoom()
   }
 }
 </script>
 
 <style>
   /* CSS */
+  html,body{background:transparent!important;}
   #app{
     height: 100%;
   }

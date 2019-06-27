@@ -1,6 +1,6 @@
 'use strict'
 
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, screen } from 'electron'
 
 /**
  * Set `__static` path to static files in production
@@ -11,26 +11,62 @@ if (process.env.NODE_ENV !== 'development') {
 }
 
 let mainWindow
+let desktopWindow
+// let child
+// let cx = 100
+// let timer = null
 const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
-
+const desktopWindowUrl = process.env.NODE_ENV === 'development'
+  ? `http://localhost:9080/#/desktop-top`
+  : `file://${__dirname}/index.html#/desktop-top`
 function createWindow () {
   /**
    * Initial window options
    */
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize
+  console.log(height)
+  console.log(width)
   mainWindow = new BrowserWindow({
-    height: 563,
+    width,
+    height: 400,
     useContentSize: true,
-    width: 1000
+    webPreferences: {
+      nodeIntegration: true
+    },
+    show: false,
+    transparent: true,
+    frame: false
   })
 
+  // mainWindow.setIgnoreMouseEvents(true)
   mainWindow.loadURL(winURL)
+  desktopWindow = new BrowserWindow({
+    width,
+    height: 25,
+    parent: mainWindow,
+    transparent: true,
+    frame: false,
+    show: false,
+    webPreferences: {
+      nodeIntegration: true
+    }
+  })
+  desktopWindow.loadURL(desktopWindowUrl)
 
   mainWindow.on('closed', () => {
     mainWindow = null
   })
   // 设置分辨率大小
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.setPosition(0, 50)
+    mainWindow.show()
+  })
+  desktopWindow.once('ready-to-show', () => {
+    desktopWindow.setPosition(0, 100)
+    desktopWindow.show()
+  })
 }
 
 app.on('ready', createWindow)
