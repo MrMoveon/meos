@@ -33,7 +33,7 @@
       <li>
         <a-icon type="bg-colors"/>壁纸
       </li>
-      <li @click="handleShutdownDrop">
+      <li @mouseup="handleShutdownDrop">
         <a-icon type="logout"/>关机
         <a-icon type="caret-down"/>
       </li>
@@ -42,40 +42,27 @@
 </template>
 
 <script>
-import { remote, ipcRenderer } from 'electron'
-import Vue from 'vue'
-import { Icon } from 'ant-design-vue'
-Vue.use(Icon)
-const { Menu } = remote
-const menuTpl = [
-  {
-    label: '锁屏',
-    click () {}
-  },
-  {
-    label: '睡眠',
-    click () {}
-  },
-  {
-    label: '关机',
-    click () {}
-  },
-  {
-    label: '重启电脑',
-    click () {}
-  },
-  {
-    label: '关机',
-    click () {}
-  }
-]
-const menu = Menu.buildFromTemplate(menuTpl)
+import { ipcRenderer, remote } from 'electron'
+// import TWEEN from '@tweenjs/tween.js'
+const { BrowserWindow, screen } = remote
+const { width } = screen.getPrimaryDisplay().workAreaSize
+
 export default {
   name: 'desktop-top',
   data () {
     return {
-      desktopType: 'meos'
+      desktopType: 'meos',
+      winId: null,
+      winId2: null
     }
+  },
+  created () {
+    var self = this
+    ipcRenderer.send('getWindowId', 'tipsWindow')
+    // 监听主进程返回当前窗口id,
+    ipcRenderer.on('winId', (event, data) => {
+      self.winId = data
+    })
   },
   computed: {},
   methods: {
@@ -83,8 +70,19 @@ export default {
       this.desktopType = type
       ipcRenderer.send('desktopSwitch', type)
     },
-    handleShutdownDrop (type) {
-      menu.popup({ window: remote.getCurrentWindow() })
+    handleShutdownDrop () {
+      // 获取tipswindow
+      var tipsWind = BrowserWindow.fromId(this.winId)
+      var bounds = { x: width - 130, y: 25, width: 130, height: 140 }
+      // 设置窗口位置，大小
+      ipcRenderer.send('setWinPosition', bounds)
+      console.log(tipsWind.isVisible())
+
+      if (tipsWind.isVisible()) {
+        tipsWind.hide()
+      } else {
+        tipsWind.show()
+      }
     }
   }
 }
@@ -106,6 +104,7 @@ export default {
     padding: 0 10px;
     font-size: 12px;
     text-shadow:1px 1px 3px #666;
+    user-select: none;
     cursor: pointer;
     .anticon {
       margin-right: 5px;

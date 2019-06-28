@@ -20,10 +20,7 @@
 
 <script>
 import { ipcRenderer } from 'electron'
-import Vue from 'vue'
-import {Tooltip, Button} from 'ant-design-vue'
-Vue.use(Tooltip)
-Vue.use(Button)
+
 export default {
   name: 'desktop-content',
   data () {
@@ -34,7 +31,6 @@ export default {
           icon: '../../../../static/images/icon/icon-home.png'
         },
         {
-
           title: '浏览器',
           icon: '../../../../static/images/icon/icon-browser.png'
         },
@@ -60,7 +56,7 @@ export default {
   },
   created () {
     var self = this
-    //
+    // 监听桌面顶部开关的切换
     ipcRenderer.on('desktopSwitch', (event, data) => {
       self.type = data
     })
@@ -68,13 +64,13 @@ export default {
   mounted () {
     document.querySelector('.desktop-content-bg').addEventListener('transitionend', this.transitionend)
   },
+  beforeDestroy () {
+    document.querySelector('.desktop-content-bg').removeEventListener('transitionend', this.transitionend)
+  },
   methods: {
-    handle (e) {
-      this.test = {background: '#CCC'}
-    },
+    // 背景移动结束，隐藏窗口
     transitionend () {
       if (this.type === 'window') {
-        console.log('end')
         ipcRenderer.send('desktopVisible', 'hide')
       }
     }
@@ -98,6 +94,7 @@ export default {
     background-position: center top;
     background-size: cover;
     transition: all .3s;
+    // transition-delay: 1s;
     backface-visibility: hidden;
   }
   &.window{
@@ -105,7 +102,7 @@ export default {
       transform: translate3d(0,100%,0);
     }
     .desktop-content-bg{
-      transform: translate3d(100%,0,0);
+      transform: translate3d(200%,0,0);
     }
   }
 }
@@ -125,6 +122,7 @@ export default {
   justify-content: center;
   align-items: center;
   transition: all .3s;
+  // transition-delay: 1s;
   &-wrap{
     display: flex;
     flex-direction: row;

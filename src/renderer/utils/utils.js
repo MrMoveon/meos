@@ -140,3 +140,28 @@ export const formatSize = (size, pointLength, units) => {
 export const getIndex = (arr, val) => {
   return arr.indexOf(val)
 }
+
+// 窗口动画
+export function MoveWindow (win, options = {}, callback) {
+  let _options = {
+    endY: 100,
+    endX: 100,
+    easing: 0.05
+  }
+  let position = win.getPosition()
+  let x = position[0]
+  let y = position[1]
+  let opts = Object.assign({}, _options, options)
+  function drawFrame () {
+    if (x === opts.endX || y === opts.endY) {
+      window.requestAnimationFrame(drawFrame)
+    }
+    let current = win.getPosition()
+
+    x += Math.ceil((opts.endX - current[0]) * opts.easing)
+    y += Math.ceil((opts.endY - current[1]) * opts.easing)
+
+    callback && callback(x, y)
+  }
+  drawFrame()
+}
